@@ -1,0 +1,42 @@
+﻿@page "/parametervaluelist"
+@inject HttpClient Http
+
+<h3>Parameter Values</h3>
+
+@if (ParameterValues != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Value</th>
+                <th>Date</th>
+                <th>Month</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var parameterValue in ParameterValues)
+            {
+                <tr>
+                    <td>@parameterValue.Id</td>
+                    <td>@parameterValue.Value</td>
+                    <td>@parameterValue.Date</td>
+                    <td>@parameterValue.Month</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    List<ParameterValueDTO> ParameterValues;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ParameterValues = await Http.GetFromJsonAsync<List<ParameterValueDTO>>("https://localhost:7158/api/parametervalue/all");
+    }
+}
