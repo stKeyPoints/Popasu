@@ -1,0 +1,53 @@
+﻿@page "/addparameter"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Add Parameter</h3>
+
+<div class="form-group">
+    <label for="name">Name:</label>
+    <input type="text" class="form-control" id="name" @bind="parameterName">
+</div>
+<div class="form-group">
+    <label for="unit">Unit:</label>
+    <input type="text" class="form-control" id="unit" @bind="parameterUnit">
+</div>
+<div class="form-group">
+    <label for="year">Year:</label>
+    <input type="number" class="form-control" id="year" @bind="parameterYear">
+</div>
+<div class="form-group">
+    <label for="parameterValue">ParameterValue:</label>
+    <input type="text" class="form-control" id="parameterValue" @bind="parameterValue">
+</div>
+
+<button class="btn btn-success" @onclick="SaveParameter">Save Parameter</button>
+
+@code {
+    private string parameterName;
+    private string parameterUnit;
+    private int parameterYear;
+    private string parameterValue;
+
+    private async Task SaveParameter()
+    {
+        var parameterCreateDTO = new ParameterCreateDTO
+            {
+                Name = parameterName,
+                Unit = parameterUnit,
+                Year = parameterYear,
+                ParameterValueId = Guid.NewGuid() // Просто для примера, нужно использовать реальный идентификатор ParameterValue
+            };
+
+        var response = await Http.PostAsJsonAsync("http://localhost:5210/parameter", parameterCreateDTO);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/parameterlist");
+        }
+        else
+        {
+            // Обработка ошибки, если не удалось сохранить параметр
+        }
+    }
+}

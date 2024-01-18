@@ -32,7 +32,7 @@ namespace Popasu.API.Controllers
                 Name = p.Name,
                 Unit = p.Unit,
                 Year = p.Year,
-                ParameterValue = p.ParameterValue?.Value.ToString() ?? "N/A" // Изменил эту строку
+                ParameterValue = p.ParameterValue?.Value.ToString() ?? "N/A"
             }).ToList();
 
             return Ok(parameterDTOs);
@@ -53,7 +53,7 @@ namespace Popasu.API.Controllers
                 Name = parameter.Name,
                 Unit = parameter.Unit,
                 Year = parameter.Year,
-                ParameterValue = parameter.ParameterValue?.Value.ToString() ?? "N/A"
+                ParameterValue = parameter.ParameterValue?.Id.ToString() ?? "N/A"
             };
 
             return Ok(parameterDTO);
@@ -98,7 +98,9 @@ namespace Popasu.API.Controllers
                 return NotFound();
             }
 
-            var parameterValue = _parameterValueRepository.GetById(parameterDTO.ParameterValueId);
+            var parameterValueId = Guid.Parse(parameterDTO.ParameterValueId);
+            var parameterValue = _parameterValueRepository.GetById(parameterValueId);
+
             if (parameterValue == null)
             {
                 return NotFound("ParameterValue is not found");

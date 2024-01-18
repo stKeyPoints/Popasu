@@ -1,4 +1,4 @@
-﻿@page "/parametervaluelist"
+﻿@page "/parametervalueList"
 @inject HttpClient Http
 
 <h3>Parameter Values</h3>
@@ -12,6 +12,7 @@
                 <th>Value</th>
                 <th>Date</th>
                 <th>Month</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -22,6 +23,10 @@
                     <td>@parameterValue.Value</td>
                     <td>@parameterValue.Date</td>
                     <td>@parameterValue.Month</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" @onclick="() => ShowUpdateParameterValueModal(parameterValue)">Update</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteParameterValue(parameterValue.Id)">Delete</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -31,6 +36,29 @@ else
 {
     <p>Loading...</p>
 }
+
+<!-- Модальное окно для обновления значения параметра -->
+<div class="modal" style="display: @(IsUpdateParameterValueModalVisible ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="HideUpdateParameterValueModal">&times;</span>
+        <h4>Update Parameter Value</h4>
+
+        <div class="form-group">
+            <label for="update-value">Value:</label>
+            <input type="text" class="form-control" @bind="UpdateParameterValue.Value" />
+        </div>
+        <div class="form-group">
+            <label for="update-date">Date:</label>
+            <input type="text" class="form-control" @bind="UpdateParameterValue.Date" />
+        </div>
+        <div class="form-group">
+            <label for="update-month">Month:</label>
+            <input type="text" class="form-control" @bind="UpdateParameterValue.Month" />
+        </div>
+        <button class="btn btn-primary" @onclick="UpdateParameterValueAsync">Update Parameter Value</button>
+    </div>
+</div>
+
 
 <h3>Add Parameter Value</h3>
 
@@ -48,9 +76,55 @@ else
 </div>
 <button class="btn btn-primary" @onclick="AddParameterValue">Add Parameter Value</button>
 
+
+
+<style>
+    /* Стили для модального окна */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+</style>
+
+
+
+
 @code {
     List<ParameterValueDTO> ParameterValues;
     ParameterValueCreateDTO NewParameterValue = new ParameterValueCreateDTO();
+    ParameterValueUpdateDTO UpdateParameterValue = new ParameterValueUpdateDTO();
+    bool IsUpdateParameterValueModalVisible = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -68,6 +142,66 @@ else
 
             // Clear the form
             NewParameterValue = new ParameterValueCreateDTO();
+        }
+        else
+        {
+            // Handle error if needed
+            // For example, you can display an error message
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {errorMessage}");
+        }
+    }
+
+    private async Task DeleteParameterValue(Guid id)
+    {
+        var response = await Http.DeleteAsync($"http://localhost:5210/parametervalue/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the list after deleting
+            ParameterValues = await Http.GetFromJsonAsync<List<ParameterValueDTO>>("http://localhost:5210/parametervalue/all");
+        }
+        else
+        {
+            // Handle error if needed
+            // For example, you can display an error message
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {errorMessage}");
+        }
+    }
+
+    private void ShowUpdateParameterValueModal(ParameterValueDTO parameterValue)
+    {
+        UpdateParameterValue = new ParameterValueUpdateDTO
+            {
+                Id = parameterValue.Id,
+                Value = parameterValue.Value,
+                Date = parameterValue.Date,
+                Month = parameterValue.Month
+            };
+
+        IsUpdateParameterValueModalVisible = true;
+    }
+
+    private void HideUpdateParameterValueModal()
+    {
+        IsUpdateParameterValueModalVisible = false;
+    }
+
+    private async Task UpdateParameterValueAsync()
+    {
+        var response = await Http.PutAsJsonAsync($"http://localhost:5210/parametervalue", UpdateParameterValue);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the list after updating
+            ParameterValues = await Http.GetFromJsonAsync<List<ParameterValueDTO>>("http://localhost:5210/parametervalue/all");
+
+            // Clear the form
+            UpdateParameterValue = new ParameterValueUpdateDTO();
+
+            // Hide the modal
+            HideUpdateParameterValueModal();
         }
         else
         {

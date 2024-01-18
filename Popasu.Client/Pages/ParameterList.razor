@@ -1,0 +1,205 @@
+﻿@page "/parameterlist"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Parameters</h3>
+
+@if (Parameters != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Unit</th>
+                <th>Year</th>
+                <th>ParameterValue</th>
+                <th>Actions</th> <!-- Добавлен столбец для действий -->
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var parameter in Parameters)
+            {
+                <tr>
+                    <td>@parameter.Id</td>
+                    <td>@parameter.Name</td>
+                    <td>@parameter.Unit</td>
+                    <td>@parameter.Year</td>
+                    <td>@(parameter.ParameterValue != null ? parameter.ParameterValue : "N/A")</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" @onclick="() => ShowUpdateParameterModal(parameter)">Update</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteParameter(parameter.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button class="btn btn-primary" @onclick="AddParameter">Add Parameter</button>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+<!-- Модальное окно для обновления значения параметра -->
+<div class="modal" style="display: @(IsUpdateParameterModalVisible ? "block" : "none")">
+    <div class="modal-content">
+        <span class="close" @onclick="HideUpdateParameterModal">&times;</span>
+        <h4>Update Parameter</h4>
+
+        <div class="form-group">
+            <label for="update-name">Name:</label>
+            <input type="text" class="form-control" @bind="UpdateParameter.Name" />
+        </div>
+        <div class="form-group">
+            <label for="update-unit">Unit:</label>
+            <input type="text" class="form-control" @bind="UpdateParameter.Unit" />
+        </div>
+        <div class="form-group">
+            <label for="update-year">Year:</label>
+            <input type="text" class="form-control" @bind="UpdateParameter.Year" />
+        </div>
+        <div class="form-group">
+            <label for="update-value">ParameterValueId:</label>
+            <input type="text" class="form-control" @bind="UpdateParameter.ParameterValueId" />
+        </div>
+        <button class="btn btn-primary" @onclick="UpdateParameterAsync">Update Parameter</button>
+    </div>
+</div>
+
+
+<style>
+    /* Стили для модального окна */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+</style>
+
+
+@code {
+    List<ParameterDTO> Parameters;
+    ParameterCreateDTO NewParameter = new ParameterCreateDTO();
+    ParameterUpdateDTO UpdateParameter = new ParameterUpdateDTO();
+    bool IsUpdateParameterModalVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Parameters = await Http.GetFromJsonAsync<List<ParameterDTO>>("http://localhost:5210/parameter/all");
+    }
+
+    private async Task AddParameter()
+    {
+        var response = await Http.PostAsJsonAsync("http://localhost:5210/parameter", NewParameter);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the list after adding
+            Parameters = await Http.GetFromJsonAsync<List<ParameterDTO>>("http://localhost:5210/parameter/all");
+
+            // Clear the form
+            NewParameter = new ParameterCreateDTO();
+        }
+        else
+        {
+            // Handle error if needed
+            // For example, you can display an error message
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {errorMessage}");
+        }
+    }
+
+    private async Task DeleteParameter(Guid id)
+    {
+        var response = await Http.DeleteAsync($"http://localhost:5210/parameter/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the list after deleting
+            Parameters = await Http.GetFromJsonAsync<List<ParameterDTO>>("http://localhost:5210/parameter/all");
+        }
+        else
+        {
+            // Handle error if needed
+            // For example, you can display an error message
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {errorMessage}");
+        }
+    }
+
+    private void ShowUpdateParameterModal(ParameterDTO parameter)
+    {
+        UpdateParameter = new ParameterUpdateDTO
+            {
+                Id = parameter.Id,
+                Name = parameter.Name,
+                Unit = parameter.Unit,
+                Year = parameter.Year,
+                ParameterValueId = parameter.ParameterValue // Используем строковое представление Guid
+            };
+
+        IsUpdateParameterModalVisible = true;
+    }
+
+
+    private void HideUpdateParameterModal()
+    {
+        IsUpdateParameterModalVisible = false;
+    }
+
+    private async Task UpdateParameterAsync()
+    {
+        var response = await Http.PutAsJsonAsync($"http://localhost:5210/parameter", UpdateParameter);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the list after updating
+            Parameters = await Http.GetFromJsonAsync<List<ParameterDTO>>("http://localhost:5210/parameter/all");
+
+            // Clear the form
+            UpdateParameter = new ParameterUpdateDTO();
+
+            // Hide the modal
+            HideUpdateParameterModal();
+        }
+        else
+        {
+            // Handle error if needed
+            // For example, you can display an error message
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {errorMessage}");
+        }
+    }
+}

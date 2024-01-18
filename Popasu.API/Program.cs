@@ -20,8 +20,11 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("*");
+                          policy.AllowAnyOrigin()
+                                .AllowAnyHeader() // Разрешить все заголовки
+                                .AllowAnyMethod(); // Разрешить все методы
                       });
+
 });
 
 var app = builder.Build();
