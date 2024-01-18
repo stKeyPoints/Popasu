@@ -3,6 +3,6 @@
     public class WindRoseUpdateDTO
     {
         public Guid Id { get; set; }
-        public List<Guid> ParameterIDs { get; set; } = null!;
+        public List<string> ParametersIDs { get; set; } = new List<string>();
     }
 }

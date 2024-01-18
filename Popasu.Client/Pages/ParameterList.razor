@@ -1,6 +1,5 @@
-﻿@page "/parameterlist"
+﻿@page "/parameterList"
 @inject HttpClient Http
-@inject NavigationManager NavigationManager
 
 <h3>Parameters</h3>
 
@@ -13,8 +12,8 @@
                 <th>Name</th>
                 <th>Unit</th>
                 <th>Year</th>
-                <th>ParameterValue</th>
-                <th>Actions</th> <!-- Добавлен столбец для действий -->
+                <th>ParameterValueId</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -25,7 +24,7 @@
                     <td>@parameter.Name</td>
                     <td>@parameter.Unit</td>
                     <td>@parameter.Year</td>
-                    <td>@(parameter.ParameterValue != null ? parameter.ParameterValue : "N/A")</td>
+                    <td>@(parameter.ParameterValue ?? "N/A")</td>
                     <td>
                         <button class="btn btn-warning btn-sm" @onclick="() => ShowUpdateParameterModal(parameter)">Update</button>
                         <button class="btn btn-danger btn-sm" @onclick="() => DeleteParameter(parameter.Id)">Delete</button>
@@ -34,15 +33,13 @@
             }
         </tbody>
     </table>
-
-    <button class="btn btn-primary" @onclick="AddParameter">Add Parameter</button>
 }
 else
 {
     <p>Loading...</p>
 }
 
-<!-- Модальное окно для обновления значения параметра -->
+<!-- Модальное окно для обновления параметра -->
 <div class="modal" style="display: @(IsUpdateParameterModalVisible ? "block" : "none")">
     <div class="modal-content">
         <span class="close" @onclick="HideUpdateParameterModal">&times;</span>
@@ -61,12 +58,33 @@ else
             <input type="text" class="form-control" @bind="UpdateParameter.Year" />
         </div>
         <div class="form-group">
-            <label for="update-value">ParameterValueId:</label>
+            <label for="update-parametervalueid">ParameterValueId:</label>
             <input type="text" class="form-control" @bind="UpdateParameter.ParameterValueId" />
         </div>
         <button class="btn btn-primary" @onclick="UpdateParameterAsync">Update Parameter</button>
     </div>
 </div>
+
+
+<h3>Add Parameter</h3>
+
+<div class="form-group">
+    <label for="name">Name:</label>
+    <input type="text" class="form-control" @bind="NewParameter.Name" />
+</div>
+<div class="form-group">
+    <label for="unit">Unit:</label>
+    <input type="text" class="form-control" @bind="NewParameter.Unit" />
+</div>
+<div class="form-group">
+    <label for="year">Year:</label>
+    <input type="text" class="form-control" @bind="NewParameter.Year" />
+</div>
+<div class="form-group">
+    <label for="parametervalueid">ParameterValueId:</label>
+    <input type="text" class="form-control" @bind="NewParameter.ParameterValueId" />
+</div>
+<button class="btn btn-primary" @onclick="AddParameter">Add Parameter</button>
 
 
 <style>
@@ -107,6 +125,8 @@ else
             cursor: pointer;
         }
 </style>
+
+
 
 
 @code {
@@ -167,12 +187,11 @@ else
                 Name = parameter.Name,
                 Unit = parameter.Unit,
                 Year = parameter.Year,
-                ParameterValueId = parameter.ParameterValue // Используем строковое представление Guid
+                ParameterValueId = parameter.ParameterValue
             };
 
         IsUpdateParameterModalVisible = true;
     }
-
 
     private void HideUpdateParameterModal()
     {
