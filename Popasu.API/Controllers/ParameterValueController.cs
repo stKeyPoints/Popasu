@@ -19,7 +19,7 @@ namespace Popasu.API.Controllers
             _context = context;
             _parameterValueRepository = new ParameterValueRepository(context);
         }
-
+        // GET: api/Emploeyers
         [HttpGet("all")]
         public IActionResult GetAll()
         {
