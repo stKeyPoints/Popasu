@@ -1,0 +1,96 @@
+﻿@page "/climateList"
+@inject HttpClient Http
+
+<h3>Climate List</h3>
+
+@if (Climates != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>WindRose</th>
+                <th>Parameters</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var climate in Climates)
+            {
+                <tr>
+                    <td>@climate.Id</td>
+                    <td>@climate.WindRose.Id</td>
+                    <td>@string.Join(", ", climate.Parameters)</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteClimate(climate.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3>Add Climate</h3>
+    <div class="form-group">
+        <label for="windRoseId">WindRose ID:</label>
+        <input type="text" class="form-control" @bind="NewClimate.WindRoseId" />
+    </div>
+    <div class="form-group">
+        <label for="parameters">Parameters (comma-separated):</label>
+        <input type="text" class="form-control" @bind="NewClimate.ParametersInput" />
+    </div>
+    <button class="btn btn-primary" @onclick="AddClimate">Add Climate</button>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    List<ClimateDTO> Climates;
+    ClimateCreateDTO NewClimate = new ClimateCreateDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Climates = await Http.GetFromJsonAsync<List<ClimateDTO>>("http://localhost:5210/climate/all");
+    }
+
+    private async Task DeleteClimate(Guid id)
+    {
+        var response = await Http.DeleteAsync($"http://localhost:5210/climate/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the list after deleting
+            Climates = await Http.GetFromJsonAsync<List<ClimateDTO>>("http://localhost:5210/climate/all");
+        }
+        else
+        {
+            // Handle error if needed
+            // For example, you can display an error message
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {errorMessage}");
+        }
+    }
+
+    private async Task AddClimate()
+    {
+        NewClimate.ParameterIDs = NewClimate.ParametersInput.Split(',').Select(Guid.Parse).ToList();
+        var response = await Http.PostAsJsonAsync("http://localhost:5210/climate", NewClimate);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the list after adding
+            Climates = await Http.GetFromJsonAsync<List<ClimateDTO>>("http://localhost:5210/climate/all");
+
+            // Clear the form
+            NewClimate = new ClimateCreateDTO();
+        }
+        else
+        {
+            // Handle error if needed
+            // For example, you can display an error message
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {errorMessage}");
+        }
+    }
+}

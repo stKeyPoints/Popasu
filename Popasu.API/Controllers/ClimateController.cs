@@ -37,13 +37,19 @@ namespace Popasu.API.Controllers
                 WindRose = new WindRoseDTO
                 {
                     Id = c.WindRose?.Id ?? Guid.Empty,
-                    Parameters = c.WindRose?.Parameters.Select(p => p.ParameterValue?.Value.ToString() ?? "N/A").ToList() ?? new List<string>()
+                    Parameters = c.WindRose?.Parameters
+                        ?.Select(p => p.ParameterValue?.Value.ToString() ?? "N/A")
+                        .ToList() ?? new List<string>()
                 },
-                Parameters = c.Parameters.Select(p => p.ParameterValue?.Value.ToString() ?? "N/A").ToList()
+                Parameters = c.Parameters
+                    ?.Select(p => p.ParameterValue?.Value.ToString() ?? "N/A")
+                    .ToList() ?? new List<string>()
             }).ToList();
 
             return Ok(climateDTOs);
         }
+
+
 
         [HttpGet("{guid}")]
         public IActionResult GetById(Guid guid)
