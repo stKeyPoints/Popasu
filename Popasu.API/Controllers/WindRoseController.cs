@@ -89,7 +89,7 @@ namespace Popasu.API.Controllers
                 return NotFound();
             }
 
-            var parameters = _parameterRepository.GetByIds(windRoseDTO.ParameterIDs);
+            var parameters = windRoseDTO.ParametersIDs.Select(Guid.Parse).ToList();
             if (parameters.Count == 0)
             {
                 return NotFound("Parameters are not found");
@@ -97,17 +97,18 @@ namespace Popasu.API.Controllers
 
             // Обновляем параметры WindRose
             oldWindRose.Parameters.Clear();
-            oldWindRose.Parameters.AddRange(parameters);
+            oldWindRose.Parameters.AddRange(_parameterRepository.GetByIds(parameters));
 
             var result = _windRoseRepository.Update(oldWindRose);
             var windRoseDTOResponse = new WindRoseDTO
             {
                 Id = result.Id,
-                Parameters = result.Parameters.Select(p => p.Name).ToList()
+                Parameters = result.Parameters.Select(p => p.ParameterValue?.Value.ToString() ?? "N/A").ToList()
             };
 
             return Ok(windRoseDTOResponse);
         }
+
 
         [HttpDelete("{guid}")]
         public IActionResult Delete(Guid guid)

@@ -1,7 +1,7 @@
-﻿@page "/windroseList"
+﻿@page "/windRoseList"
 @inject HttpClient Http
 
-<h3>WindRoses</h3>
+<h3>WindRose List</h3>
 
 @if (WindRoses != null)
 {
@@ -18,134 +18,34 @@
             {
                 <tr>
                     <td>@windRose.Id</td>
+                    <td>@string.Join(", ", windRose.Parameters)</td>
                     <td>
-                        @if (windRose.Parameters.Any())
-                        {
-                            <ul>
-                                @foreach (var parameter in windRose.Parameters)
-                                {
-                                    <li>@parameter</li>
-                                }
-                            </ul>
-                        }
-                        else
-                        {
-                            <p>No Parameters</p>
-                        }
-                    </td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" @onclick="() => ShowUpdateWindRoseModal(windRose)">Update</button>
                         <button class="btn btn-danger btn-sm" @onclick="() => DeleteWindRose(windRose.Id)">Delete</button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <h3>Add WindRose</h3>
+    <div class="form-group">
+        <label for="parameters">Parameters (comma-separated):</label>
+        <input type="text" class="form-control" @bind="NewWindRose.ParametersInput" />
+    </div>
+    <button class="btn btn-primary" @onclick="AddWindRose">Add WindRose</button>
 }
 else
 {
     <p>Loading...</p>
 }
 
-<!-- Модальное окно для обновления ветряной розы -->
-<div class="modal" style="display: @(IsUpdateWindRoseModalVisible ? "block" : "none")">
-    <div class="modal-content">
-        <span class="close" @onclick="HideUpdateWindRoseModal">&times;</span>
-        <h4>Update WindRose</h4>
-
-        <!-- Добавьте форму для обновления параметров ветряной розы -->
-        <div class="form-group">
-            <label for="update-parametersids">Parameter IDs:</label>
-            <input type="text" class="form-control" @bind="UpdateWindRose.ParametersIDs" />
-        </div>
-
-        <!-- Отобразите другие поля для обновления ветряной розы -->
-
-        <button class="btn btn-primary" @onclick="UpdateWindRoseAsync">Update WindRose</button>
-    </div>
-</div>
-
-<h3>Add WindRose</h3>
-
-<!-- Добавьте форму для добавления новой ветряной розы -->
-<div class="form-group">
-    <label for="parametersids">Parameter IDs:</label>
-    <input type="text" class="form-control" @bind="NewWindRose.ParametersIDs" />
-</div>
-
-<!-- Отобразите другие поля для добавления новой ветряной розы -->
-
-<button class="btn btn-primary" @onclick="AddWindRose">Add WindRose</button>
-
-<style>
-    /* Стили для модального окна */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0, 0, 0);
-        background-color: rgba(0, 0, 0, 0.4);
-        padding-top: 60px;
-    }
-
-    .modal-content {
-        background-color: #fefefe;
-        margin: 5% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-    }
-
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-</style>
-
 @code {
     List<WindRoseDTO> WindRoses;
     WindRoseCreateDTO NewWindRose = new WindRoseCreateDTO();
-    WindRoseUpdateDTO UpdateWindRose = new WindRoseUpdateDTO();
-    bool IsUpdateWindRoseModalVisible = false;
 
     protected override async Task OnInitializedAsync()
     {
         WindRoses = await Http.GetFromJsonAsync<List<WindRoseDTO>>("http://localhost:5210/windrose/all");
-    }
-
-    private async Task AddWindRose()
-    {
-        var response = await Http.PostAsJsonAsync("http://localhost:5210/windrose", NewWindRose);
-
-        if (response.IsSuccessStatusCode)
-        {
-            // Refresh the list after adding
-            WindRoses = await Http.GetFromJsonAsync<List<WindRoseDTO>>("http://localhost:5210/windrose/all");
-
-            // Clear the form
-            NewWindRose = new WindRoseCreateDTO();
-        }
-        else
-        {
-            // Handle error if needed
-            // For example, you can display an error message
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Error: {errorMessage}");
-        }
     }
 
     private async Task DeleteWindRose(Guid id)
@@ -166,37 +66,18 @@ else
         }
     }
 
-    private void ShowUpdateWindRoseModal(WindRoseDTO windRose)
+    private async Task AddWindRose()
     {
-        UpdateWindRose = new WindRoseUpdateDTO
-            {
-                Id = windRose.Id,
-                ParametersIDs = windRose.ParametersIDs
-                // Задайте другие свойства для обновления
-            };
-
-        IsUpdateWindRoseModalVisible = true;
-    }
-
-    private void HideUpdateWindRoseModal()
-    {
-        IsUpdateWindRoseModalVisible = false;
-    }
-
-    private async Task UpdateWindRoseAsync()
-    {
-        var response = await Http.PutAsJsonAsync($"http://localhost:5210/windrose", UpdateWindRose);
+        NewWindRose.ParameterIDs = NewWindRose.ParametersInput.Split(',').Select(Guid.Parse).ToList();
+        var response = await Http.PostAsJsonAsync("http://localhost:5210/windrose", NewWindRose);
 
         if (response.IsSuccessStatusCode)
         {
-            // Refresh the list after updating
+            // Refresh the list after adding
             WindRoses = await Http.GetFromJsonAsync<List<WindRoseDTO>>("http://localhost:5210/windrose/all");
 
             // Clear the form
-            UpdateWindRose = new WindRoseUpdateDTO();
-
-            // Hide the modal
-            HideUpdateWindRoseModal();
+            NewWindRose = new WindRoseCreateDTO();
         }
         else
         {
